@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, Check, CreditCard, Landmark, ShieldCheck, Wallet } from 'lucide-react';
+import { ArrowLeft, Check, Copy, CreditCard, Landmark, ShieldCheck, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useMemo, useState } from 'react';
@@ -65,6 +65,15 @@ const t = {
       paypal: 'PayPal',
       bank: 'Bonifico Istantaneo'
     },
+    hostedTitle: 'Checkout ospitato da Stripe',
+    hostedText:
+      'Per il test non serve inserire i dati qui. Clicca il pulsante di pagamento: i dati carta verranno richiesti direttamente su Stripe.',
+    hostedHint: 'Credenziali test Stripe',
+    testCard: 'Carta test: 4242 4242 4242 4242',
+    testExpiry: 'Scadenza: 12/34',
+    testCvc: 'CVC: 123',
+    copyTestData: 'Copia dati test',
+    copied: 'Copiato',
     cardholder: 'Titolare Carta',
     cardNumber: 'Numero Carta',
     expiry: 'Scadenza (MM/AA)',
@@ -112,6 +121,15 @@ const t = {
       paypal: 'PayPal',
       bank: 'Instant Bank Transfer'
     },
+    hostedTitle: 'Stripe hosted checkout',
+    hostedText:
+      'No need to enter card details here for testing. Click pay and Stripe will collect payment data on the hosted page.',
+    hostedHint: 'Stripe test credentials',
+    testCard: 'Test card: 4242 4242 4242 4242',
+    testExpiry: 'Expiry: 12/34',
+    testCvc: 'CVC: 123',
+    copyTestData: 'Copy test data',
+    copied: 'Copied',
     cardholder: 'Cardholder Name',
     cardNumber: 'Card Number',
     expiry: 'Expiry (MM/YY)',
@@ -168,6 +186,7 @@ function CheckoutContent() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [checkoutError, setCheckoutError] = useState(checkoutStatus === 'cancel' ? copy.cancelled : '');
   const [paymentMethod, setPaymentMethod] = useState('card');
+  const [copied, setCopied] = useState(false);
 
   const handlePay = async () => {
     setIsProcessing(true);
@@ -202,6 +221,17 @@ function CheckoutContent() {
       setIsValidatingStep1(false);
       setStep(2);
     }, 900);
+  };
+
+  const handleCopyTestData = async () => {
+    const payload = `${copy.testCard}\n${copy.testExpiry}\n${copy.testCvc}`;
+    try {
+      await navigator.clipboard.writeText(payload);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {
+      setCopied(false);
+    }
   };
 
   const fieldClass =
@@ -363,40 +393,59 @@ function CheckoutContent() {
 
                 <div className="mt-6 grid gap-4">
                   {paymentMethod === 'card' ? (
-                    <>
-                      <input className={fieldClass} placeholder={copy.cardholder} />
-                      <label className="relative">
-                        <CreditCard className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                        <input className={`${fieldClass} pl-10`} placeholder={copy.cardNumber} />
-                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
-                          VISA · MC
-                        </span>
-                      </label>
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <input className={fieldClass} placeholder={copy.expiry} />
-                        <input className={fieldClass} placeholder={copy.cvc} />
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-white">{copy.hostedTitle}</p>
+                          <p className="mt-1 text-sm text-slate-300">{copy.hostedText}</p>
+                        </div>
+                        <CreditCard className="h-5 w-5 text-sky-300" />
                       </div>
-                    </>
+
+                      <div className="mt-4 rounded-xl border border-white/10 bg-[#050812] p-3 text-sm text-slate-200">
+                        <p className="text-xs uppercase tracking-[0.12em] text-slate-400">{copy.hostedHint}</p>
+                        <p className="mt-2">{copy.testCard}</p>
+                        <div className="mt-1 flex flex-wrap gap-3 text-slate-300">
+                          <span>{copy.testExpiry}</span>
+                          <span>{copy.testCvc}</span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleCopyTestData}
+                        className="mt-3 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-slate-200 transition hover:bg-white/[0.08]"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                        {copied ? copy.copied : copy.copyTestData}
+                      </button>
+                    </div>
                   ) : null}
 
                   {paymentMethod === 'paypal' ? (
-                    <button
-                      type="button"
-                      className="inline-flex items-center justify-center rounded-xl border border-sky-300/40 bg-sky-500/10 px-4 py-3 text-sm font-semibold text-sky-200 hover:bg-sky-500/20"
-                    >
-                      <Wallet className="mr-2 h-4 w-4" />
-                      {copy.payWithPayPal}
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center rounded-xl border border-sky-300/40 bg-sky-500/10 px-4 py-3 text-sm font-semibold text-sky-200 hover:bg-sky-500/20"
+                      >
+                        <Wallet className="mr-2 h-4 w-4" />
+                        {copy.payWithPayPal}
+                      </button>
+                      <p className="text-xs text-slate-400">{copy.hostedText}</p>
+                    </>
                   ) : null}
 
                   {paymentMethod === 'bank' ? (
-                    <button
-                      type="button"
-                      className="inline-flex items-center justify-center rounded-xl border border-emerald-300/40 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/20"
-                    >
-                      <Landmark className="mr-2 h-4 w-4" />
-                      {copy.activateBank}
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center rounded-xl border border-emerald-300/40 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/20"
+                      >
+                        <Landmark className="mr-2 h-4 w-4" />
+                        {copy.activateBank}
+                      </button>
+                      <p className="text-xs text-slate-400">{copy.hostedText}</p>
+                    </>
                   ) : null}
                 </div>
 
