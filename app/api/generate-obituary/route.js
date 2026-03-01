@@ -9,7 +9,10 @@ const SYSTEM_PROMPT_EN =
 
 export async function POST(request) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
+    const rawApiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_PRIVATE_KEY || '';
+    const apiKey = rawApiKey.toString().trim().replace(/^['"]|['"]$/g, '');
+
+    if (!apiKey || !apiKey.startsWith('sk-')) {
       return NextResponse.json({ error: 'OPENAI_API_KEY not configured on server.' }, { status: 500 });
     }
 
@@ -31,7 +34,7 @@ export async function POST(request) {
         : `Nome del defunto: ${name}\nTratti caratteristici: ${traits || 'Non specificati.'}`;
 
     const client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
+      apiKey
     });
 
     const response = await client.responses.create({

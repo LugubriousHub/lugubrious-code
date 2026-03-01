@@ -54,7 +54,10 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Il messaggio è obbligatorio.' }, { status: 400 });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
+    const rawApiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_PRIVATE_KEY || '';
+    const apiKey = rawApiKey.toString().trim().replace(/^['"]|['"]$/g, '');
+
+    if (!apiKey || !apiKey.startsWith('sk-')) {
       return NextResponse.json({ error: 'OPENAI_API_KEY non configurata sul server.' }, { status: 500 });
     }
 
@@ -67,7 +70,7 @@ export async function POST(request) {
     const contextPrefix = pageContext ? `\n\nContesto pagina attuale:\n${pageContext}\n` : '';
     const userContent = `${contextPrefix}\nRichiesta utente:\n${message}`.trim();
 
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const client = new OpenAI({ apiKey });
 
     const completion = await client.responses.create({
       model: 'gpt-4o-mini',

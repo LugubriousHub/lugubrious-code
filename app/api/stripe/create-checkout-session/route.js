@@ -20,8 +20,35 @@ function paymentMethodTypes(selected) {
 
 export async function POST(request) {
   try {
-    if (!process.env.STRIPE_SECRET_KEY) {
-      return NextResponse.json({ error: 'STRIPE_SECRET_KEY missing.' }, { status: 500 });
+    const rawSecret = process.env.STRIPE_SECRET_KEY;
+    const rawPrivate = process.env.STRIPE_PRIVATE_KEY;
+    const stripeSecretKey = (rawSecret || rawPrivate || '').trim().replace(/^['"]|['"]$/g, '');
+
+    if (!stripeSecretKey) {
+      return NextResponse.json(
+        {
+          error:
+            'Missing Stripe secret key. Set STRIPE_SECRET_KEY (or STRIPE_PRIVATE_KEY) in the active Vercel environment and redeploy.',
+          debug: {
+            hasStripeSecretKey: Boolean(rawSecret),
+            hasStripePrivateKey: Boolean(rawPrivate)
+          }
+        },
+        { status: 500 }
+      );
+    }
+
+    if (!stripeSecretKey.startsWith('sk_')) {
+      return NextResponse.json(
+        {
+          error:
+            'Invalid Stripe secret key format. Use a server secret key starting with sk_ (not pk_).',
+          debug: {
+            keyPrefix: stripeSecretKey.slice(0, 3)
+          }
+        },
+        { status: 500 }
+      );
     }
 
     const body = await request.json();
@@ -36,7 +63,7 @@ export async function POST(request) {
     const unitAmount = Math.round(amount * 100);
     const planName = planId.charAt(0).toUpperCase() + planId.slice(1);
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const stripe = new Stripe(stripeSecretKey);
     const origin =
       process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_URL.startsWith('http')
         ? process.env.NEXT_PUBLIC_APP_URL
@@ -73,4 +100,3 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Unable to create checkout session.' }, { status: 500 });
   }
 }
-
