@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import LanguageSwitch from '../../../components/LanguageSwitch';
 import { useLanguage } from '../../../components/LanguageProvider';
+import { isValidEmail, isValidPassword } from '../../lib/auth-validation';
 import { copy } from '../../lib/translations';
 
 export default function ConsumerLoginPage() {
@@ -12,9 +13,31 @@ export default function ConsumerLoginPage() {
   const { language } = useLanguage();
   const t = copy[language].loginForm;
   const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [errors, setErrors] = useState({ email: '', password: '' });
+
+  const validationText =
+    language === 'it'
+      ? {
+          email: 'Inserisci un indirizzo email valido.',
+          password: 'Minimo 8 caratteri, almeno 1 maiuscola, 1 minuscola e 1 numero.'
+        }
+      : {
+          email: 'Enter a valid email address.',
+          password: 'At least 8 characters, with 1 uppercase, 1 lowercase, and 1 number.'
+        };
+
+  const validateForm = () => {
+    const nextErrors = { email: '', password: '' };
+    if (!isValidEmail(formData.email)) nextErrors.email = validationText.email;
+    if (!isValidPassword(formData.password)) nextErrors.password = validationText.password;
+    setErrors(nextErrors);
+    return !nextErrors.email && !nextErrors.password;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
     setIsLoading(true);
     setTimeout(() => {
       router.push('/consumer/dashboard');
@@ -36,11 +59,31 @@ export default function ConsumerLoginPage() {
           <form onSubmit={handleSubmit} className="mt-6 grid gap-4">
             <label className="grid gap-1 text-sm text-slate-200">
               {t.email}
-              <input type="email" className="field" placeholder="family@email.com" required />
+              <input
+                type="email"
+                className="field"
+                placeholder="family@email.com"
+                value={formData.email}
+                onChange={(event) => setFormData((prev) => ({ ...prev, email: event.target.value }))}
+                onBlur={validateForm}
+                required
+              />
+              {errors.email ? <span className="text-xs text-rose-300">{errors.email}</span> : null}
             </label>
             <label className="grid gap-1 text-sm text-slate-200">
               {t.password}
-              <input type="password" className="field" placeholder="••••••••" required />
+              <input
+                type="password"
+                className="field"
+                placeholder="••••••••"
+                minLength={8}
+                pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}"
+                value={formData.password}
+                onChange={(event) => setFormData((prev) => ({ ...prev, password: event.target.value }))}
+                onBlur={validateForm}
+                required
+              />
+              {errors.password ? <span className="text-xs text-rose-300">{errors.password}</span> : null}
             </label>
             <button
               type="submit"

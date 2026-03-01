@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import LanguageSwitch from '../../components/LanguageSwitch';
 import { useLanguage } from '../../components/LanguageProvider';
+import { isValidEmail, isValidPassword } from '../lib/auth-validation';
 import { copy } from '../lib/translations';
 
 export default function LoginPage() {
@@ -22,13 +23,34 @@ export default function LoginPage() {
     email: '',
     password: ''
   });
+  const [registerErrors, setRegisterErrors] = useState({ email: '', password: '' });
+
+  const validationText =
+    language === 'it'
+      ? {
+          email: 'Inserisci un indirizzo email aziendale valido.',
+          password: 'Minimo 8 caratteri, almeno 1 maiuscola, 1 minuscola e 1 numero.'
+        }
+      : {
+          email: 'Enter a valid business email address.',
+          password: 'At least 8 characters, with 1 uppercase, 1 lowercase, and 1 number.'
+        };
 
   const handleRegisterField = (field) => (event) => {
     setRegisterData((prev) => ({ ...prev, [field]: event.target.value }));
   };
 
+  const validateRegister = () => {
+    const nextErrors = { email: '', password: '' };
+    if (!isValidEmail(registerData.email)) nextErrors.email = validationText.email;
+    if (!isValidPassword(registerData.password)) nextErrors.password = validationText.password;
+    setRegisterErrors(nextErrors);
+    return !nextErrors.email && !nextErrors.password;
+  };
+
   const handleRegister = (event) => {
     event.preventDefault();
+    if (!validateRegister()) return;
     setIsSubmitting(true);
     setTimeout(() => {
       router.push('/b2b/dashboard');
@@ -91,10 +113,12 @@ export default function LoginPage() {
                         type="email"
                         value={registerData.email}
                         onChange={handleRegisterField('email')}
+                        onBlur={validateRegister}
                         placeholder={t.registerPlaceholders.email}
                         required
                         className="rounded-xl border border-white/5 bg-white/5 px-4 py-3 text-white outline-none transition-all placeholder:text-slate-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
                       />
+                      {registerErrors.email ? <span className="text-xs text-rose-300">{registerErrors.email}</span> : null}
                     </label>
                     <label className="grid gap-2 text-sm text-slate-200">
                       {t.registerFields.password}
@@ -102,10 +126,16 @@ export default function LoginPage() {
                         type="password"
                         value={registerData.password}
                         onChange={handleRegisterField('password')}
+                        onBlur={validateRegister}
                         placeholder={t.registerPlaceholders.password}
+                        minLength={8}
+                        pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}"
                         required
                         className="rounded-xl border border-white/5 bg-white/5 px-4 py-3 text-white outline-none transition-all placeholder:text-slate-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
                       />
+                      {registerErrors.password ? (
+                        <span className="text-xs text-rose-300">{registerErrors.password}</span>
+                      ) : null}
                     </label>
 
                     <div className="mt-2 md:col-span-2">
