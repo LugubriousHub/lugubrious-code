@@ -74,6 +74,9 @@ const t = {
     goBack: 'Indietro',
     payAndActivate: (price) => `Paga €${price} e Attiva`,
     processing: 'Elaborazione...',
+    redirecting: 'Reindirizzamento a Stripe...',
+    checkoutError: 'Errore durante la creazione del pagamento Stripe.',
+    cancelled: 'Pagamento annullato. Puoi riprovare quando vuoi.',
     trustSignals: ['Crittografia AES-256', 'Attivazione istantanea', 'Fatturazione automatica via SDI/Email'],
     poweredByStripe: 'Powered by Stripe',
     poweredByPayPal: 'PayPal',
@@ -118,6 +121,9 @@ const t = {
     goBack: 'Back',
     payAndActivate: (price) => `Pay €${price} and Activate`,
     processing: 'Processing...',
+    redirecting: 'Redirecting to Stripe...',
+    checkoutError: 'Error creating Stripe checkout session.',
+    cancelled: 'Payment canceled. You can try again anytime.',
     trustSignals: ['Secure AES-256 Encryption', 'Instant activation', 'Automatic invoicing via SDI/Email'],
     poweredByStripe: 'Powered by Stripe',
     poweredByPayPal: 'PayPal',
@@ -139,6 +145,7 @@ function CheckoutContent() {
 
   const planId = searchParams.get('plan') || 'pro';
   const billing = searchParams.get('billing') || 'mensile';
+  const checkoutStatus = searchParams.get('checkout');
   const isAnnual = billing === 'annuale' || billing === 'yearly' || billing === 'annual';
 
   const currentPlan = planDetails[planId] || planDetails.pro;
@@ -156,17 +163,37 @@ function CheckoutContent() {
   const currentPlanFeatures = currentPlan.features[locale];
   const cycleLabel = isAnnual ? copy.cycle.yearly : copy.cycle.monthly;
 
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(checkoutStatus === 'success' ? 3 : 1);
   const [isValidatingStep1, setIsValidatingStep1] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [checkoutError, setCheckoutError] = useState(checkoutStatus === 'cancel' ? copy.cancelled : '');
   const [paymentMethod, setPaymentMethod] = useState('card');
 
-  const handlePay = () => {
+  const handlePay = async () => {
     setIsProcessing(true);
-    setTimeout(() => {
+    setCheckoutError('');
+    try {
+      const response = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          planId,
+          billing,
+          paymentMethod,
+          locale
+        })
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data?.url) {
+        throw new Error(data?.error || copy.checkoutError);
+      }
+
+      window.location.href = data.url;
+    } catch (error) {
       setIsProcessing(false);
-      setStep(3);
-    }, 2000);
+      setCheckoutError(error instanceof Error ? error.message : copy.checkoutError);
+    }
   };
 
   const handleContinueToPayment = () => {
@@ -389,9 +416,14 @@ function CheckoutContent() {
                       isProcessing ? 'animate-pulse' : ''
                     }`}
                   >
-                    {isProcessing ? copy.processing : copy.payAndActivate(formattedPrice)}
+                    {isProcessing ? copy.redirecting : copy.payAndActivate(formattedPrice)}
                   </button>
                 </div>
+                {checkoutError ? (
+                  <p className="mt-3 rounded-xl border border-rose-300/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+                    {checkoutError}
+                  </p>
+                ) : null}
                 <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-400">
                   {copy.trustSignals.map((signal) => (
                     <span key={signal} className="rounded-full border border-white/10 bg-white/[0.02] px-2.5 py-1">
