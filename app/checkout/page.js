@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, Check, Copy, CreditCard, Landmark, ShieldCheck, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '../../components/LanguageProvider';
 
 const planDetails = {
@@ -164,6 +164,7 @@ function CheckoutContent() {
   const planId = searchParams.get('plan') || 'pro';
   const billing = searchParams.get('billing') || 'mensile';
   const checkoutStatus = searchParams.get('checkout');
+  const checkoutSessionId = searchParams.get('session_id');
   const isAnnual = billing === 'annuale' || billing === 'yearly' || billing === 'annual';
 
   const currentPlan = planDetails[planId] || planDetails.pro;
@@ -187,6 +188,36 @@ function CheckoutContent() {
   const [checkoutError, setCheckoutError] = useState(checkoutStatus === 'cancel' ? copy.cancelled : '');
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [copied, setCopied] = useState(false);
+  const [emailNotificationSent, setEmailNotificationSent] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function notifyPayment() {
+      if (checkoutStatus !== 'success' || !checkoutSessionId || emailNotificationSent) return;
+      try {
+        const response = await fetch('/api/stripe/notify-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: checkoutSessionId })
+        });
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => null);
+          throw new Error(data?.error || 'Payment notification failed.');
+        }
+
+        if (!ignore) setEmailNotificationSent(true);
+      } catch (error) {
+        console.error('Checkout email notification error:', error);
+      }
+    }
+
+    notifyPayment();
+    return () => {
+      ignore = true;
+    };
+  }, [checkoutStatus, checkoutSessionId, emailNotificationSent]);
 
   const handlePay = async () => {
     setIsProcessing(true);
