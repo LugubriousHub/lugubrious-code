@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lugubrious Hub | Gestione pratiche funerarie</title>
+    <meta
+      name="description"
+      content="Lugubrious Hub semplifica la burocrazia funeraria: suite B2B per agenzie e area consumer per monitorare lo stato pratiche."
+    />
+    <style>
+      :root {
+        --bg: #0f1726;
+        --bg-soft: #151f33;
+        --surface: #1f2c46;
+        --surface-2: #233252;
+        --text: #f4f0e4;
+        --muted: #c7d3e8;
+        --line: #3f567c;
+        --brand: #f3b747;
+        --brand-dark: #d69f35;
+        --ok: #65d6a3;
+        --radius: 16px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 10% 15%, #1d3558 0%, transparent 32%),
+          radial-gradient(circle at 90% 0%, #184c59 0%, transparent 27%),
+          linear-gradient(140deg, #0f1726 5%, #101a2a 55%, #172338);
+        min-height: 100vh;
+        line-height: 1.45;
+      }
+
+      .container {
+        width: min(1140px, 92%);
+        margin: 0 auto;
+      }
+
+      .nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding: 22px 0;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.2rem;
+        font-weight: 800;
+        letter-spacing: 0.4px;
+      }
+
+      .brand-dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--brand);
+        box-shadow: 0 0 16px #f3b747;
+      }
+
+      .button {
+        border: 0;
+        text-decoration: none;
+        border-radius: 999px;
+        font-weight: 700;
+        padding: 11px 20px;
+        cursor: pointer;
+        display: inline-block;
+      }
+
+      .button.primary {
+        background: var(--brand);
+        color: #1a1a1a;
+      }
+
+      .button.primary:hover {
+        background: var(--brand-dark);
+      }
+
+      .button.secondary {
+        background: transparent;
+        color: var(--text);
+        border: 1px solid #7f96b7;
+      }
+
+      .hero {
+        padding: 36px 0 26px;
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 22px;
+        align-items: stretch;
+      }
+
+      h1 {
+        font-size: clamp(2rem, 5vw, 3.25rem);
+        line-height: 1.05;
+        margin: 0 0 14px;
+      }
+
+      .lead {
+        margin: 0;
+        color: var(--muted);
+        font-size: clamp(1rem, 2vw, 1.12rem);
+        max-width: 62ch;
+      }
+
+      .hero-cta {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .panel {
+        background: linear-gradient(160deg, var(--surface), var(--surface-2));
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 20px;
+        box-shadow: 0 14px 32px rgba(0, 0, 0, 0.25);
+      }
+
+      .panel h2,
+      .panel h3 {
+        margin-top: 0;
+      }
+
+      .stats {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 10px;
+      }
+
+      .stats li {
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+      }
+
+      .stats strong {
+        color: var(--ok);
+      }
+
+      section {
+        padding: 22px 0;
+      }
+
+      .section-title {
+        margin: 0 0 13px;
+        font-size: clamp(1.35rem, 3vw, 2rem);
+      }
+
+      .section-subtitle {
+        margin: 0 0 18px;
+        color: var(--muted);
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .login-card {
+        border: 1px solid var(--line);
+        background: rgba(19, 30, 48, 0.7);
+        border-radius: 14px;
+        padding: 16px;
+      }
+
+      .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: #2c3f61;
+        color: #d6e3fa;
+      }
+
+      .login-card h3 {
+        margin: 10px 0 8px;
+      }
+
+      .login-card p {
+        color: var(--muted);
+        margin: 0;
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+
+      .feature {
+        background: rgba(20, 31, 49, 0.75);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px;
+      }
+
+      .feature h3 {
+        margin: 0 0 7px;
+      }
+
+      .feature p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .consumer {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        align-items: start;
+      }
+
+      .timeline {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 11px;
+      }
+
+      .timeline li {
+        background: rgba(22, 34, 54, 0.8);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px;
+      }
+
+      .timeline strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .timeline span {
+        color: var(--muted);
+      }
+
+      .progress-card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px;
+        background: rgba(20, 31, 49, 0.75);
+      }
+
+      .progress-row {
+        margin: 12px 0;
+      }
+
+      .progress-row label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.94rem;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+
+      .bar {
+        width: 100%;
+        height: 9px;
+        border-radius: 999px;
+        background: #2b3b5b;
+        overflow: hidden;
+      }
+
+      .bar > i {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, #f3b747, #5fd4d4);
+      }
+
+      .footer {
+        padding: 34px 0 42px;
+        color: #9db0cb;
+        font-size: 0.94rem;
+      }
+
+      @media (max-width: 960px) {
+        .hero,
+        .split,
+        .features,
+        .consumer {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="container nav">
+      <div class="brand"><span class="brand-dot"></span> Lugubrious Hub</div>
+      <a class="button secondary" href="#accesso">Demo accesso</a>
+    </header>
+
+    <main class="container">
+      <section class="hero">
+        <div class="panel">
+          <h1>Riduci la burocrazia funeraria in un momento delicato</h1>
+          <p class="lead">
+            Lugubrious Hub e una piattaforma con doppia esperienza: una suite completa
+            per agenzie funebri (B2B) e un'area cliente (consumer) per monitorare lo
+            stato delle pratiche in tempo reale.
+          </p>
+          <div class="hero-cta">
+            <a href="#b2b" class="button primary">Esplora modulo B2B</a>
+            <a href="#consumer" class="button secondary">Vedi area cliente</a>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <h2 style="margin-bottom: 12px">Perche funziona</h2>
+          <ul class="stats">
+            <li><span>Autocompilazione documenti</span> <strong>Riduce errori</strong></li>
+            <li><span>Coordinamento flotta/staff</span> <strong>Meno overlap</strong></li>
+            <li><span>Preventivi e split payment</span> <strong>Incassi piu chiari</strong></li>
+            <li><span>Tracking pratiche cliente</span> <strong>Trasparenza totale</strong></li>
+          </ul>
+        </aside>
+      </section>
+
+      <section id="accesso" class="panel">
+        <h2 class="section-title">1) Accesso differenziato all'app</h2>
+        <p class="section-subtitle">
+          Schermata login unica con due percorsi in base al ruolo: agenzia funebre
+          (B2B) oppure famiglia/cliente (Consumer).
+        </p>
+        <div class="split">
+          <article class="login-card">
+            <span class="pill">B2B</span>
+            <h3>Accesso Agenzia Funebre</h3>
+            <p>
+              Login con email aziendale e codice sede. Abilita dashboard gestionale,
+              archivio pratiche, pianificazione operativa e report.
+            </p>
+          </article>
+          <article class="login-card">
+            <span class="pill">CONSUMER</span>
+            <h3>Accesso Famiglia/Cliente</h3>
+            <p>
+              Login tramite codice pratica e OTP. Mostra stato pratiche, documenti
+              richiesti e avanzamento con indicatori visivi.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="b2b">
+        <h2 class="section-title">2) Moduli principali B2B</h2>
+        <p class="section-subtitle">
+          Strumenti pensati per agenzie che gestiscono molte cerimonie e processi
+          amministrativi con enti diversi.
+        </p>
+        <div class="features">
+          <article class="feature">
+            <h3>Autocompilazione burocratica</h3>
+            <p>
+              Inseriti i dati del defunto e dei familiari, il sistema genera e compila
+              PDF per il comune specifico: permessi, certificati e richieste cimiteriali.
+            </p>
+          </article>
+          <article class="feature">
+            <h3>Logistica flotta e staff</h3>
+            <p>
+              Calendario operativo per assegnare carri, furgoni e turni necrofori,
+              evitando accavallamenti nelle giornate con piu funerali.
+            </p>
+          </article>
+          <article class="feature">
+            <h3>Preventivi e split payment</h3>
+            <p>
+              Preventivo modulare con opzioni di servizio e invio link di pagamento
+              separati ai familiari, per semplificare riscossione e contabilita.
+            </p>
+          </article>
+          <article class="feature">
+            <h3>Hub fornitori esterni</h3>
+            <p>
+              Pannello ordini verso fioristi, marmisti e crematori con tracciamento
+              conferme e tempi di consegna per ogni cerimonia.
+            </p>
+          </article>
+          <article class="feature">
+            <h3>Necrologi e memorie digitali</h3>
+            <p>
+              Assistente IA per testo necrologio, pubblicazione su canali integrati e
+              QR code verso pagina commemorativa dedicata.
+            </p>
+          </article>
+          <article class="feature">
+            <h3>Archivio e workflow centralizzati</h3>
+            <p>
+              Storico pratiche, stato documentale e task operativi in un unico gestionale,
+              con maggiore velocita nel flusso quotidiano.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="consumer" class="panel">
+        <h2 class="section-title">3) Esperienza Consumer collegata al B2B</h2>
+        <p class="section-subtitle">
+          Il cliente finale visualizza avanzamento e prossimi passi della propria pratica
+          senza dover contattare continuamente l'agenzia.
+        </p>
+
+        <div class="consumer">
+          <ul class="timeline">
+            <li>
+              <strong>Presa in carico pratica</strong>
+              <span>Confermata dall'agenzia e assegnata al referente.</span>
+            </li>
+            <li>
+              <strong>Documenti comunali</strong>
+              <span>In verifica presso l'ente di competenza.</span>
+            </li>
+            <li>
+              <strong>Pianificazione cerimonia</strong>
+              <span>Data e logistica in fase di conferma finale.</span>
+            </li>
+            <li>
+              <strong>Chiusura amministrativa</strong>
+              <span>Rilascio ricevute e archiviazione conclusiva.</span>
+            </li>
+          </ul>
+
+          <div class="progress-card">
+            <h3 style="margin-top: 0">Monitor visuale pratiche</h3>
+            <div class="progress-row">
+              <label><span>Documentazione</span><strong>80%</strong></label>
+              <div class="bar"><i style="width: 80%"></i></div>
+            </div>
+            <div class="progress-row">
+              <label><span>Logistica</span><strong>65%</strong></label>
+              <div class="bar"><i style="width: 65%"></i></div>
+            </div>
+            <div class="progress-row">
+              <label><span>Pagamenti</span><strong>45%</strong></label>
+              <div class="bar"><i style="width: 45%"></i></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="container footer">
+      © <span id="year"></span> Lugubrious Hub. Prototipo landing front-end.
+    </footer>
+
+    <script>
+      document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>

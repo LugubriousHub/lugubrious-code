@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  min-height: 100vh;
+  font-family: "Avenir Next", "Segoe UI", "Trebuchet MS", sans-serif;
+  color: #dbe7ff;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(56, 189, 248, 0.18), transparent 30%),
+    radial-gradient(circle at 90% 0%, rgba(139, 92, 246, 0.18), transparent 32%),
+    #020617;
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  letter-spacing: 0.01em;
+  color: #eef4ff;
+}
+
+.surface {
+  @apply rounded-2xl border border-white/10 bg-white/[0.03] shadow-xl shadow-black/25 backdrop-blur;
+}
+
+.surface-soft {
+  @apply rounded-xl border border-white/10 bg-white/[0.02] backdrop-blur;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-sky-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-900/30 transition hover:from-sky-400 hover:to-violet-400;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-slate-100 transition hover:bg-white/[0.1];
+}
+
+.field {
+  @apply w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-sky-400;
+}
+
+/* Normalize older utility classes to the dark design system */
+.text-slate-900 {
+  color: #eef4ff !important;
+}
+.text-slate-700,
+.text-slate-600 {
+  color: #cbd5e1 !important;
+}
+.text-slate-500 {
+  color: #94a3b8 !important;
+}
+.border-slate-200 {
+  border-color: rgb(255 255 255 / 0.1) !important;
+}
+.bg-slate-100 {
+  background-color: rgb(255 255 255 / 0.05) !important;
+}
+.bg-white {
+  background-color: rgb(255 255 255 / 0.04) !important;
+}
+
+@keyframes infinite-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-infinite-scroll {
+  animation: infinite-scroll 26s linear infinite;
+}
+
+.animate-infinite-scroll-slow {
+  animation: infinite-scroll 42s linear infinite;
+}
+
+.ghost-mask {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(255, 255, 255, 1) 15%,
+    rgba(255, 255, 255, 1) 85%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(255, 255, 255, 1) 15%,
+    rgba(255, 255, 255, 1) 85%,
+    transparent 100%
+  );
+}
