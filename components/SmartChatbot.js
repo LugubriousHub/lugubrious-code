@@ -271,7 +271,7 @@ export default function SmartChatbot({ mode = 'family' }) {
         body: JSON.stringify({
           message,
           role: modeKey === 'agency' ? 'b2b' : 'consumer',
-          language,
+          language: language || 'it',
           pageContext
         })
       });

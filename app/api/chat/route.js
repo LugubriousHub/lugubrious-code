@@ -49,6 +49,8 @@ export async function POST(request) {
     const message = (body?.message ?? '').toString().trim();
     const role = (body?.role ?? '').toString().toLowerCase();
     const pageContext = (body?.pageContext ?? '').toString().trim();
+    const language = (body?.language ?? '').toString().toLowerCase();
+    const langCode = language === 'en' ? 'en' : 'it';
 
     if (!message) {
       return NextResponse.json({ error: 'Il messaggio è obbligatorio.' }, { status: 400 });
@@ -62,10 +64,11 @@ export async function POST(request) {
     }
 
     const mode = role === 'b2b' || body?.mode === 'agency' ? 'agency' : 'family';
+    const languageConstraint = `0. VINCOLO DI LINGUA ASSOLUTO: L'utente sta usando l'interfaccia nella lingua corrispondente al codice "${langCode}". Devi elaborare TUTTE queste istruzioni (anche se scritte in italiano) ma RISPONDERE ESCLUSIVAMENTE IN QUESTA LINGUA. Adatta il tono, l'empatia e i termini tecnici alla lingua richiesta. Mai usare l'italiano se il codice non è "it".`;
     const systemPrompt =
       mode === 'agency'
-        ? `${SYSTEM_PROMPT_AGENCY}\n\n${SYSTEM_PROMPT_AGENCY_PIVOT_RULE}`
-        : `${SYSTEM_PROMPT_FAMILY}\n\n${SYSTEM_PROMPT_FAMILY_PIVOT_RULE}`;
+        ? `${languageConstraint}\n\n${SYSTEM_PROMPT_AGENCY}\n\n${SYSTEM_PROMPT_AGENCY_PIVOT_RULE}`
+        : `${languageConstraint}\n\n${SYSTEM_PROMPT_FAMILY}\n\n${SYSTEM_PROMPT_FAMILY_PIVOT_RULE}`;
 
     const contextPrefix = pageContext ? `\n\nContesto pagina attuale:\n${pageContext}\n` : '';
     const userContent = `${contextPrefix}\nRichiesta utente:\n${message}`.trim();

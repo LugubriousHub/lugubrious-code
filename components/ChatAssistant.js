@@ -122,7 +122,7 @@ export default function ChatAssistant() {
         body: JSON.stringify({
           message: trimmed,
           role,
-          language,
+          language: language || 'it',
           pageContext: getPageContext(pathname, language)
         })
       });
