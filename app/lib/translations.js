@@ -109,7 +109,7 @@ export const copy = {
         }
       ],
       footerTagline: "L'eccellenza digitale al servizio della memoria",
-      location: 'Milano, IT',
+      location: 'Portegrandi, VE',
       platform: 'Piattaforma',
       company: 'Società',
       legal: 'Legale',
@@ -805,7 +805,7 @@ export const copy = {
         }
       ],
       footerTagline: 'Digital excellence at the service of remembrance',
-      location: 'Milan, IT',
+      location: 'Portegrandi, VE',
       platform: 'Platform',
       company: 'Company',
       legal: 'Legal',

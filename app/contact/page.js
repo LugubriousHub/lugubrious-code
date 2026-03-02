@@ -19,7 +19,7 @@ export default function ContactPage() {
           <p className="mt-3 text-slate-300">+39 02 1234567</p>
           <p className="mt-2 text-slate-300">info@lugubrioushub.it</p>
           <p className="mt-2 text-slate-300">
-            {language === 'it' ? 'Via dell Eternità 10, Milano' : 'Via dell Eternità 10, Milan'}
+            {language === 'it' ? 'Via Trieste 45, 30022 Portegrandi (VE)' : 'Via Trieste 45, 30022 Portegrandi (VE)'}
           </p>
         </article>
       </div>
