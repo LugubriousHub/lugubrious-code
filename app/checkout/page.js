@@ -370,22 +370,6 @@ function CheckoutContent() {
                   </span>
                 </div>
 
-                <p className="mt-6 text-xs uppercase tracking-[0.18em] text-slate-400">{copy.expressTitle}</p>
-                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-black px-4 py-3 text-sm font-medium text-white transition hover:bg-black/80"
-                  >
-                    {copy.applePay}
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-flex items-center justify-center rounded-xl border border-white/20 bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-white/90"
-                  >
-                    {copy.googlePay}
-                  </button>
-                </div>
-
                 <div className="mt-6 grid gap-3 sm:grid-cols-3">
                   <button
                     type="button"
