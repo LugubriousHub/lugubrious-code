@@ -391,8 +391,13 @@ export default function SmartChatbot({ mode = 'family' }) {
       (lower.includes('non capisco') ||
         lower.includes('aiuto') ||
         lower.includes('confuso') ||
+        lower.includes('persa') ||
+        lower.includes('perso') ||
+        lower.includes('disperata') ||
+        lower.includes('disperato') ||
         lower.includes('help') ||
-        lower.includes('lost'));
+        lower.includes('lost') ||
+        lower.includes('overwhelmed'));
 
     if (triggerSafety) {
       setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: 'user', content: trimmed }]);

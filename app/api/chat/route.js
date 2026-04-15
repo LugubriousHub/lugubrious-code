@@ -42,7 +42,6 @@ export async function POST(request) {
 
     // Filtra i messaggi card locali prima di passarli al modello
     const cleanHistory = messages
-      .slice(0, -1)
       .filter((m) => !m.content?.startsWith('__card:'));
 
     // 2. Routing silenzioso via Manager Agent
