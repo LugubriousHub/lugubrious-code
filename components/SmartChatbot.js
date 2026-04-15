@@ -1,5 +1,6 @@
 'use client';
 
+import { useChat } from 'ai/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Camera,
@@ -15,6 +16,29 @@ import {
 import { useMemo, useRef, useState } from 'react';
 import { useLanguage } from './LanguageProvider';
 import { copy } from '../app/lib/translations';
+
+// Badge colore per agente attivo
+const AGENT_BADGE = {
+  manager:   { color: '#94A3B8', label: { it: 'Analisi',        en: 'Analysing'     } },
+  discovery: { color: '#6475FA', label: { it: 'Qualificazione', en: 'Qualification' } },
+  sales:     { color: '#E8650A', label: { it: 'Consulenza',     en: 'Consultation'  } },
+  support:   { color: '#22C55E', label: { it: 'Assistenza',     en: 'Support'       } },
+};
+
+// Prefisso per messaggi card locali (non inviati all'API come history)
+const CARD_PREFIX = '__card:';
+
+function isCardContent(content) {
+  return typeof content === 'string' && content.startsWith(CARD_PREFIX);
+}
+
+function parseCard(content) {
+  try {
+    return JSON.parse(content.slice(CARD_PREFIX.length));
+  } catch {
+    return null;
+  }
+}
 
 function formatTemplate(template, values = {}) {
   return template.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? '');
@@ -53,23 +77,29 @@ function renderInlineMarkdown(text) {
 function parseTableRows(lines, startIndex) {
   const rows = [];
   let i = startIndex;
-
   while (i < lines.length && lines[i].includes('|')) {
     rows.push(lines[i]);
     i += 1;
   }
-
   return { rows, nextIndex: i };
 }
 
 function parseTableLine(line) {
-  return line
-    .split('|')
-    .map((cell) => cell.trim())
-    .filter(Boolean);
+  return line.split('|').map((cell) => cell.trim()).filter(Boolean);
 }
 
-function MarkdownContent({ content }) {
+function MarkdownContent({ content, isStreaming }) {
+  // Durante lo streaming non mostrare tabelle parziali
+  if (isStreaming) {
+    return (
+      <div className="space-y-1.5">
+        {content.split('\n').filter(Boolean).map((line, i) => (
+          <p key={i} className="leading-relaxed text-slate-100">{renderInlineMarkdown(line.replace(/^#+\s*/, '').replace(/^\s*[\-*]\s*/, ''))}</p>
+        ))}
+      </div>
+    );
+  }
+
   const lines = content.split('\n');
   const blocks = [];
 
@@ -148,73 +178,74 @@ function MarkdownContent({ content }) {
   return <div className="space-y-1.5">{blocks}</div>;
 }
 
-function MessageRenderer({ message, t, onOcrAction, mode }) {
-  if (message.type === 'summaryCard') {
-    return (
-      <div className="max-w-[88%] rounded-2xl border border-violet-300/20 bg-violet-500/[0.08] p-3">
-        <p className="font-serif text-base text-white">{t.agencySummary.title}</p>
-        <div className="mt-2 grid gap-2 text-sm text-slate-200">
-          <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
-            <span className="text-xs uppercase tracking-[0.12em] text-slate-400">
-              {t.agencySummary.revenueLabel}
-            </span>
-            <p className="mt-1 text-white">{t.agencySummary.revenueValue}</p>
-          </div>
-          <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
-            <span className="text-xs uppercase tracking-[0.12em] text-slate-400">
-              {t.agencySummary.casesLabel}
-            </span>
-            <p className="mt-1 text-white">{t.agencySummary.casesValue}</p>
-          </div>
-          <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
-            <span className="text-xs uppercase tracking-[0.12em] text-slate-400">
-              {t.agencySummary.fleetLabel}
-            </span>
-            <p className="mt-1 text-white">{t.agencySummary.fleetValue}</p>
+function MessageRenderer({ message, t, onOcrAction, mode, isStreaming }) {
+  if (isCardContent(message.content)) {
+    const card = parseCard(message.content);
+    if (!card) return null;
+
+    if (card.type === 'summaryCard') {
+      return (
+        <div className="max-w-[88%] rounded-2xl border border-violet-300/20 bg-violet-500/[0.08] p-3">
+          <p className="font-serif text-base text-white">{t.agencySummary.title}</p>
+          <div className="mt-2 grid gap-2 text-sm text-slate-200">
+            <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
+              <span className="text-xs uppercase tracking-[0.12em] text-slate-400">{t.agencySummary.revenueLabel}</span>
+              <p className="mt-1 text-white">{t.agencySummary.revenueValue}</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
+              <span className="text-xs uppercase tracking-[0.12em] text-slate-400">{t.agencySummary.casesLabel}</span>
+              <p className="mt-1 text-white">{t.agencySummary.casesValue}</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
+              <span className="text-xs uppercase tracking-[0.12em] text-slate-400">{t.agencySummary.fleetLabel}</span>
+              <p className="mt-1 text-white">{t.agencySummary.fleetValue}</p>
+            </div>
           </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (message.type === 'ocrAction') {
-    return (
-      <div className="max-w-[88%] rounded-2xl border border-sky-300/30 bg-sky-500/[0.08] p-3">
-        <p className="text-sm text-slate-100">{message.content}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => onOcrAction('prefill')}
-            className="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white transition hover:bg-white/[0.12]"
-          >
-            {t.ocrActions.prefill}
-          </button>
-          <button
-            type="button"
-            onClick={() => onOcrAction('cancel')}
-            className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-slate-300 transition hover:bg-white/[0.08]"
-          >
-            {t.ocrActions.cancel}
-          </button>
+    if (card.type === 'ocrAction') {
+      return (
+        <div className="max-w-[88%] rounded-2xl border border-sky-300/30 bg-sky-500/[0.08] p-3">
+          <p className="text-sm text-slate-100">{card.content}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => onOcrAction('prefill')}
+              className="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-white transition hover:bg-white/[0.12]"
+            >
+              {t.ocrActions.prefill}
+            </button>
+            <button
+              type="button"
+              onClick={() => onOcrAction('cancel')}
+              className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-slate-300 transition hover:bg-white/[0.08]"
+            >
+              {t.ocrActions.cancel}
+            </button>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (message.type === 'safety') {
-    return (
-      <div className="max-w-[88%] rounded-2xl border border-amber-300/30 bg-amber-500/[0.08] p-3">
-        <p className="text-sm text-slate-100">{message.content}</p>
-        {mode === 'family' ? (
-          <button
-            type="button"
-            className="mt-3 rounded-lg border border-amber-200/30 bg-amber-400/10 px-3 py-1.5 text-xs text-amber-100 transition hover:bg-amber-300/20"
-          >
-            {t.callCoordinator}
-          </button>
-        ) : null}
-      </div>
-    );
+    if (card.type === 'safety') {
+      return (
+        <div className="max-w-[88%] rounded-2xl border border-amber-300/30 bg-amber-500/[0.08] p-3">
+          <p className="text-sm text-slate-100">{card.content}</p>
+          {mode === 'family' ? (
+            <button
+              type="button"
+              className="mt-3 rounded-lg border border-amber-200/30 bg-amber-400/10 px-3 py-1.5 text-xs text-amber-100 transition hover:bg-amber-300/20"
+            >
+              {t.callCoordinator}
+            </button>
+          ) : null}
+        </div>
+      );
+    }
+
+    return null;
   }
 
   return (
@@ -225,7 +256,9 @@ function MessageRenderer({ message, t, onOcrAction, mode }) {
           : 'border border-white/10 bg-white/[0.05] text-slate-200'
       }`}
     >
-      {message.role === 'assistant' ? <MarkdownContent content={message.content} /> : message.content}
+      {message.role === 'assistant'
+        ? <MarkdownContent content={message.content} isStreaming={isStreaming} />
+        : message.content}
     </div>
   );
 }
@@ -233,25 +266,43 @@ function MessageRenderer({ message, t, onOcrAction, mode }) {
 export default function SmartChatbot({ mode = 'family' }) {
   const { language } = useLanguage();
   const t = copy[language].chatSmart;
-  const modeKey = mode === 'agency' ? 'agency' : 'family';
+  const modeKey = mode === 'agency' ? 'agency' : mode === 'generic' ? 'generic' : 'family';
   const modeCopy = t.modes[modeKey];
+  const flow = modeKey === 'agency' ? 'b2b' : modeKey === 'generic' ? 'generic' : 'b2c';
 
   const [isOpen, setIsOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
-  const [input, setInput] = useState('');
-  const [messages, setMessages] = useState([]);
+  const [activeAgent, setActiveAgent] = useState('discovery');
+  const [isRouting, setIsRouting] = useState(false);
 
   const messagesRef = useRef(null);
   const docsInputRef = useRef(null);
   const mediaInputRef = useRef(null);
 
-  const chipLabels = useMemo(() => modeCopy.chips, [modeCopy]);
+  const activeAgentRef = useRef('discovery');
 
-  const pushAssistantMessage = (message) => {
-    setMessages((prev) => [...prev, { role: 'assistant', ...message }]);
-  };
+  const { messages, input, handleInputChange, handleSubmit, isLoading, append, setMessages } = useChat({
+    api: '/api/chat',
+    body: { flow, language, currentAgent: activeAgentRef.current },
+    onResponse: (response) => {
+      setIsRouting(false);
+      const agent = response.headers.get('X-Active-Agent');
+      if (agent && AGENT_BADGE[agent]) {
+        setActiveAgent(agent);
+        activeAgentRef.current = agent;
+      }
+    },
+    onError: () => {
+      setIsRouting(false);
+      setMessages((prev) => [
+        ...prev,
+        { id: `err-${Date.now()}`, role: 'assistant', content: t.responses.common.defaultReply },
+      ]);
+    },
+  });
+
+  const chipLabels = useMemo(() => modeCopy.chips, [modeCopy]);
 
   const scrollDown = () => {
     window.requestAnimationFrame(() => {
@@ -261,130 +312,111 @@ export default function SmartChatbot({ mode = 'family' }) {
     });
   };
 
-  const requestSmartReply = async (message) => {
-    setIsTyping(true);
-    try {
-      const pageContext = window.localStorage.getItem('lugubrious-page-context') || '';
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message,
-          role: modeKey === 'agency' ? 'b2b' : 'consumer',
-          language: language || 'it',
-          pageContext
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data?.error || t.responses.common.defaultReply);
-      }
-
-      pushAssistantMessage({ type: 'text', content: data.reply });
-    } catch {
-      pushAssistantMessage({ type: 'text', content: t.responses.common.defaultReply });
-    } finally {
-      setIsTyping(false);
-      scrollDown();
-    }
+  const injectCard = (cardData) => {
+    setMessages((prev) => [
+      ...prev,
+      { id: `card-${Date.now()}`, role: 'assistant', content: `${CARD_PREFIX}${JSON.stringify(cardData)}` },
+    ]);
+    scrollDown();
   };
 
   const handleOpen = () => {
     setIsOpen((prev) => {
       const next = !prev;
       if (next && messages.length === 0) {
-        setMessages([{ role: 'assistant', type: 'text', content: modeCopy.welcome }]);
+        setMessages([{ id: 'welcome-0', role: 'assistant', content: modeCopy.welcome }]);
       }
       return next;
     });
   };
 
   const handleChip = async (label) => {
-    setMessages((prev) => [...prev, { role: 'user', type: 'text', content: label }]);
+    if (isLoading) return;
 
+    // "Riassunto Giornata" chip in agency mode → card locale, nessuna richiesta API
     if (modeKey === 'agency' && label === modeCopy.chips[1]) {
-      setIsTyping(true);
-      await new Promise((resolve) => setTimeout(resolve, 850));
-      pushAssistantMessage({ type: 'summaryCard', content: '' });
-      setIsTyping(false);
-      scrollDown();
+      setMessages((prev) => [...prev, { id: `chip-${Date.now()}`, role: 'user', content: label }]);
+      setTimeout(() => injectCard({ type: 'summaryCard' }), 850);
       return;
     }
 
-    await requestSmartReply(label);
+    setIsRouting(true);
+    await append({ role: 'user', content: label });
+    scrollDown();
   };
 
   const handleOcrAction = async (action) => {
+    if (isLoading) return;
     const actionPrompt = action === 'prefill' ? t.ocrActions.prefill : t.ocrActions.cancel;
-    setMessages((prev) => [...prev, { role: 'user', type: 'text', content: actionPrompt }]);
-    await requestSmartReply(actionPrompt);
+    setIsRouting(true);
+    await append({ role: 'user', content: actionPrompt });
+    scrollDown();
   };
 
   const handleFiles = async (fileList) => {
     const file = fileList?.[0];
-    if (!file) return;
+    if (!file || isLoading) return;
 
-    setMessages((prev) => [
-      ...prev,
-      { role: 'user', type: 'text', content: formatTemplate(t.fileUploaded, { name: file.name }) }
-    ]);
-
+    const uploadMsg = formatTemplate(t.fileUploaded, { name: file.name });
     const isImage = file.type.startsWith('image/');
     const isPdf = file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf');
 
     if (modeKey === 'agency' && isImage) {
-      setIsTyping(true);
-      await new Promise((resolve) => setTimeout(resolve, 900));
-      pushAssistantMessage({ type: 'ocrAction', content: t.responses.agency.ocr });
-      setIsTyping(false);
-      scrollDown();
+      setMessages((prev) => [...prev, { id: `file-${Date.now()}`, role: 'user', content: uploadMsg }]);
+      setTimeout(() => injectCard({ type: 'ocrAction', content: t.responses.agency.ocr }), 900);
       return;
     }
 
     if (modeKey === 'family' && isPdf) {
-      await requestSmartReply(`${modeCopy.chips[0]}: ${file.name}`);
-      return;
-    }
-
-    await requestSmartReply(file.name);
-  };
-
-  const handleSend = async (event) => {
-    event.preventDefault();
-    const trimmed = input.trim();
-    if (!trimmed || isTyping) return;
-
-    setMessages((prev) => [...prev, { role: 'user', type: 'text', content: trimmed }]);
-    setInput('');
-
-    const lower = trimmed.toLowerCase();
-    const triggerSafety =
-      modeKey === 'family' &&
-      (lower.includes('non capisco') || lower.includes('aiuto') || lower.includes('confuso') || lower.includes('help') || lower.includes('lost'));
-
-    if (triggerSafety) {
-      setIsTyping(true);
-      await new Promise((resolve) => setTimeout(resolve, 900));
-      pushAssistantMessage({ type: 'safety', content: t.responses.family.safety });
-      setIsTyping(false);
+      setIsRouting(true);
+      await append({ role: 'user', content: `${modeCopy.chips[0]}: ${file.name}` });
       scrollDown();
       return;
     }
 
-    await requestSmartReply(trimmed);
+    setIsRouting(true);
+    await append({ role: 'user', content: uploadMsg });
+    scrollDown();
+  };
+
+  const handleFormSubmit = async (event) => {
+    event.preventDefault();
+    const trimmed = input.trim();
+    if (!trimmed || isLoading) return;
+
+    // Rilevamento distress per utenti famiglia → safety card locale, nessuna richiesta API
+    const lower = trimmed.toLowerCase();
+    const triggerSafety =
+      modeKey === 'family' &&
+      (lower.includes('non capisco') ||
+        lower.includes('aiuto') ||
+        lower.includes('confuso') ||
+        lower.includes('help') ||
+        lower.includes('lost'));
+
+    if (triggerSafety) {
+      setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: 'user', content: trimmed }]);
+      setTimeout(() => injectCard({ type: 'safety', content: t.responses.family.safety }), 900);
+      // Reset input manualmente perché non usiamo handleSubmit
+      handleInputChange({ target: { value: '' } });
+      return;
+    }
+
+    setIsRouting(true);
+    handleSubmit(event);
+    scrollDown();
   };
 
   const startRecording = () => {
-    if (!isTyping) setIsRecording(true);
+    if (!isLoading) setIsRecording(true);
   };
 
   const stopRecording = async () => {
     if (!isRecording) return;
     setIsRecording(false);
-    setMessages((prev) => [...prev, { role: 'user', type: 'text', content: t.voiceCaptured }]);
-    await requestSmartReply(t.voiceCaptured);
+    setIsRouting(true);
+    await append({ role: 'user', content: t.voiceCaptured });
+    scrollDown();
   };
 
   const onDragOver = (event) => {
@@ -398,6 +430,13 @@ export default function SmartChatbot({ mode = 'family' }) {
     await handleFiles(event.dataTransfer.files);
   };
 
+  const displayedAgent = isRouting ? 'manager' : activeAgent;
+  const agentBadge = AGENT_BADGE[displayedAgent];
+  const langKey = language === 'en' ? 'en' : 'it';
+
+  // L'ultimo messaggio assistant è quello in streaming se isLoading è true
+  const lastAssistantIdx = messages.map((m) => m.role).lastIndexOf('assistant');
+
   return (
     <div className="fixed bottom-6 right-6 z-50">
       <AnimatePresence>
@@ -408,10 +447,26 @@ export default function SmartChatbot({ mode = 'family' }) {
             exit={{ opacity: 0, y: 10, scale: 0.96 }}
             className="mb-3 flex h-[600px] w-[400px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B0F19]/90 shadow-2xl backdrop-blur-3xl"
           >
+            {/* Header con agent badge */}
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
               <div>
                 <p className="font-serif text-lg text-white">{t.title}</p>
-                <p className="text-xs text-slate-300">{modeCopy.subtitle}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-slate-300">{modeCopy.subtitle}</p>
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={displayedAgent}
+                      initial={{ opacity: 0, scale: 0.85 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.85 }}
+                      transition={{ duration: 0.2 }}
+                      className="rounded-full border px-2 py-0.5 text-[10px] font-medium"
+                      style={{ color: agentBadge.color, borderColor: `${agentBadge.color}40` }}
+                    >
+                      {agentBadge.label[langKey]}
+                    </motion.span>
+                  </AnimatePresence>
+                </div>
               </div>
               <button
                 type="button"
@@ -429,6 +484,7 @@ export default function SmartChatbot({ mode = 'family' }) {
               onDragLeave={() => setIsDragging(false)}
               onDrop={onDrop}
             >
+              {/* Quick action chips */}
               <div className="border-b border-white/5 px-3 py-2">
                 <div className="scrollbar-thin flex gap-2 overflow-x-auto pb-1">
                   {chipLabels.map((label) => (
@@ -436,7 +492,7 @@ export default function SmartChatbot({ mode = 'family' }) {
                       key={label}
                       type="button"
                       onClick={() => handleChip(label)}
-                      disabled={isTyping}
+                      disabled={isLoading}
                       className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-200 transition hover:border-violet-300/40 hover:bg-violet-500/[0.12] disabled:opacity-60"
                     >
                       {label}
@@ -445,22 +501,24 @@ export default function SmartChatbot({ mode = 'family' }) {
                 </div>
               </div>
 
+              {/* Messages */}
               <div
                 ref={messagesRef}
                 className="h-[calc(100%-3.25rem)] overflow-y-auto px-3 py-3 [scrollbar-color:rgba(148,163,184,0.3)_transparent] [scrollbar-width:thin]"
               >
                 <div className="space-y-3">
                   {messages.map((msg, idx) => (
-                    <div key={`${msg.role}-${idx}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div key={msg.id ?? `${msg.role}-${idx}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                       <MessageRenderer
                         message={msg}
                         t={t}
                         mode={modeKey}
                         onOcrAction={handleOcrAction}
+                        isStreaming={isLoading && idx === lastAssistantIdx}
                       />
                     </div>
                   ))}
-                  {isTyping ? (
+                  {isLoading && (messages[messages.length - 1]?.role !== 'assistant') ? (
                     <div className="flex justify-start">
                       <div className="rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-slate-300">
                         {t.typing}
@@ -470,6 +528,7 @@ export default function SmartChatbot({ mode = 'family' }) {
                 </div>
               </div>
 
+              {/* Drag-over overlay */}
               <AnimatePresence>
                 {isDragging ? (
                   <motion.div
@@ -491,6 +550,7 @@ export default function SmartChatbot({ mode = 'family' }) {
               </AnimatePresence>
             </div>
 
+            {/* Input area */}
             <div className="border-t border-white/10 p-3">
               <div className="mb-2 flex items-center gap-2">
                 <input
@@ -498,7 +558,7 @@ export default function SmartChatbot({ mode = 'family' }) {
                   type="file"
                   className="hidden"
                   onChange={(event) => handleFiles(event.target.files)}
-                  disabled={isTyping}
+                  disabled={isLoading}
                 />
                 <input
                   ref={mediaInputRef}
@@ -506,13 +566,13 @@ export default function SmartChatbot({ mode = 'family' }) {
                   accept="image/*,video/*"
                   className="hidden"
                   onChange={(event) => handleFiles(event.target.files)}
-                  disabled={isTyping}
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   aria-label={t.uploadDocAria}
                   onClick={() => docsInputRef.current?.click()}
-                  disabled={isTyping}
+                  disabled={isLoading}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-300 transition hover:bg-white/[0.1] disabled:opacity-60"
                 >
                   <Paperclip className="h-4 w-4" />
@@ -521,7 +581,7 @@ export default function SmartChatbot({ mode = 'family' }) {
                   type="button"
                   aria-label={t.uploadMediaAria}
                   onClick={() => mediaInputRef.current?.click()}
-                  disabled={isTyping}
+                  disabled={isLoading}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-300 transition hover:bg-white/[0.1] disabled:opacity-60"
                 >
                   <Camera className="h-4 w-4" />
@@ -534,7 +594,7 @@ export default function SmartChatbot({ mode = 'family' }) {
                   onMouseLeave={stopRecording}
                   onTouchStart={startRecording}
                   onTouchEnd={stopRecording}
-                  disabled={isTyping}
+                  disabled={isLoading}
                   className={`inline-flex h-8 items-center gap-1 rounded-lg border px-2 text-xs transition disabled:opacity-60 ${
                     isRecording
                       ? 'border-violet-300/40 bg-violet-500/20 text-violet-100'
@@ -546,17 +606,17 @@ export default function SmartChatbot({ mode = 'family' }) {
                 </button>
               </div>
 
-              <form onSubmit={handleSend} className="flex items-center gap-2">
+              <form onSubmit={handleFormSubmit} className="flex items-center gap-2">
                 <input
                   value={input}
-                  onChange={(event) => setInput(event.target.value)}
+                  onChange={handleInputChange}
                   placeholder={t.placeholder}
-                  disabled={isTyping}
+                  disabled={isLoading}
                   className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-violet-400/60 disabled:opacity-60"
                 />
                 <button
                   type="submit"
-                  disabled={!input.trim() || isTyping}
+                  disabled={!input.trim() || isLoading}
                   aria-label={t.sendAria}
                   className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-sky-500 to-violet-500 text-white transition hover:from-sky-400 hover:to-violet-400 disabled:cursor-not-allowed disabled:opacity-60"
                 >

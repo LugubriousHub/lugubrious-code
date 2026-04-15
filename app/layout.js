@@ -1,5 +1,6 @@
 import './globals.css';
 import { LanguageProvider } from '../components/LanguageProvider';
+import PublicChatbot from '../components/PublicChatbot';
 
 export const metadata = {
   title: 'Lugubrious Hub | Gestione pratiche funerarie',
@@ -11,7 +12,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="it">
       <body className="bg-[#020617] text-slate-100 antialiased">
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>
+          {children}
+          <PublicChatbot />
+        </LanguageProvider>
       </body>
     </html>
   );

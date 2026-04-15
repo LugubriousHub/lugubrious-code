@@ -1,21 +1,21 @@
-import OpenAI from 'openai';
+import { generateText } from 'ai';
+import { openai } from '@ai-sdk/openai';
 import { NextResponse } from 'next/server';
 
 const SYSTEM_PROMPT_IT =
-  'Sei un copywriter esperto e delicato per un\'agenzia funebre. Il tuo compito e scrivere un necrologio breve (massimo 4-5 frasi), commovente, elegante e rispettoso. Devi integrare i tratti caratteristici forniti dall\'utente in modo naturale e grammaticalmente perfetto, senza sembrare artificiale.';
+  "Sei un copywriter esperto e delicato per un'agenzia funebre. Il tuo compito è scrivere un necrologio breve (massimo 4-5 frasi), commovente, elegante e rispettoso. Devi integrare i tratti caratteristici forniti dall'utente in modo naturale e grammaticalmente perfetto, senza sembrare artificiale.";
 
 const SYSTEM_PROMPT_EN =
-  'You are an expert and delicate copywriter for a funeral agency. Your task is to write a short obituary (maximum 4-5 sentences), moving, elegant and respectful. Integrate the user\'s traits naturally with grammatically correct language and avoid artificial phrasing. Reply only in English.';
+  "You are an expert and delicate copywriter for a funeral agency. Your task is to write a short obituary (maximum 4-5 sentences), moving, elegant and respectful. Integrate the user's traits naturally with grammatically correct language and avoid artificial phrasing. Reply only in English.";
 
 export async function POST(request) {
+  // 1. Validazione env var
+  if (!process.env.OPENAI_API_KEY) {
+    console.error('[generate-obituary] OPENAI_API_KEY mancante nel server environment');
+    return NextResponse.json({ error: 'API Key mancante.' }, { status: 500 });
+  }
+
   try {
-    const rawApiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_PRIVATE_KEY || '';
-    const apiKey = rawApiKey.toString().trim().replace(/^['"]|['"]$/g, '');
-
-    if (!apiKey || !apiKey.startsWith('sk-')) {
-      return NextResponse.json({ error: 'OPENAI_API_KEY not configured on server.' }, { status: 500 });
-    }
-
     const body = await request.json();
     const name = (body?.name ?? '').toString().trim();
     const traits = (body?.traits ?? '').toString().trim();
@@ -23,7 +23,7 @@ export async function POST(request) {
 
     if (!name) {
       return NextResponse.json(
-        { error: language === 'en' ? 'Name is required.' : 'Il nome del defunto e obbligatorio.' },
+        { error: language === 'en' ? 'Name is required.' : 'Il nome del defunto è obbligatorio.' },
         { status: 400 }
       );
     }
@@ -33,19 +33,13 @@ export async function POST(request) {
         ? `Deceased name: ${name}\nKey traits: ${traits || 'Not specified.'}`
         : `Nome del defunto: ${name}\nTratti caratteristici: ${traits || 'Non specificati.'}`;
 
-    const client = new OpenAI({
-      apiKey
+    // 2. Chiamata LLM con try/catch e log dell'errore reale
+    const { text } = await generateText({
+      model: openai('gpt-4o-mini'),
+      system: language === 'en' ? SYSTEM_PROMPT_EN : SYSTEM_PROMPT_IT,
+      messages: [{ role: 'user', content: userPrompt }],
+      maxTokens: 300,
     });
-
-    const response = await client.responses.create({
-      model: 'gpt-4o-mini',
-      input: [
-        { role: 'system', content: language === 'en' ? SYSTEM_PROMPT_EN : SYSTEM_PROMPT_IT },
-        { role: 'user', content: userPrompt }
-      ]
-    });
-
-    const text = response.output_text?.trim();
 
     if (!text) {
       return NextResponse.json(
@@ -56,10 +50,7 @@ export async function POST(request) {
 
     return NextResponse.json({ text });
   } catch (error) {
-    console.error('generate-obituary error:', error);
-    return NextResponse.json(
-      { error: 'Error while generating obituary.' },
-      { status: 500 }
-    );
+    console.error('[generate-obituary] Errore durante la generazione:', error);
+    return NextResponse.json({ error: 'Error while generating obituary.' }, { status: 500 });
   }
 }

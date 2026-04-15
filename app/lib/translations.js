@@ -691,6 +691,12 @@ export const copy = {
           welcome:
             'Sono qui con te. Possiamo chiarire ogni passaggio della pratica con calma e rispetto.',
           chips: ['Traduci Burocrazia', 'Carica un Ricordo', 'Orari Cerimonia']
+        },
+        generic: {
+          subtitle: 'Assistente Lugubrious Hub',
+          welcome:
+            'Benvenuto in Lugubrious Hub. Sono il tuo assistente: posso aiutarti a scoprire i nostri servizi, rispondere alle tue domande o guidarti verso la soluzione più adatta.',
+          chips: ['Scopri i Servizi', 'Prezzi e Pacchetti', 'Contattaci']
         }
       }
     }
@@ -1386,6 +1392,12 @@ export const copy = {
           welcome:
             'I am here with you. We can review each step with calm and respectful guidance.',
           chips: ['Translate Paperwork', 'Upload a Memory', 'Ceremony Hours']
+        },
+        generic: {
+          subtitle: 'Lugubrious Hub Assistant',
+          welcome:
+            'Welcome to Lugubrious Hub. I am your assistant: I can help you discover our services, answer your questions, or guide you to the right solution.',
+          chips: ['Discover Services', 'Pricing & Packages', 'Contact Us']
         }
       }
     }

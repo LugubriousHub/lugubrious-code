@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { Compass, HeartHandshake, Infinity } from 'lucide-react';
-import ChatAssistant from '../../components/ChatAssistant';
 import LanguageSwitch from '../../components/LanguageSwitch';
 import { useLanguage } from '../../components/LanguageProvider';
 import { copy } from '../lib/translations';
@@ -44,7 +43,6 @@ export default function AboutPage() {
           </div>
         </section>
       </div>
-      <ChatAssistant />
     </main>
   );
 }
