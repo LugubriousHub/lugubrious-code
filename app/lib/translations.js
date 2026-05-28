@@ -185,6 +185,7 @@ export const copy = {
       switchAccount: 'Cambia account',
       links: {
         dashboard: 'Cruscotto Operativo',
+        cases: 'Pratiche',
         burocrazia: 'Burocrazia Smart',
         logistica: 'Logistica Flotta',
         preventivi: 'Preventivi & Split',
@@ -350,6 +351,62 @@ export const copy = {
       placeholderText: 'Il testo commemorativo apparira qui dopo la generazione IA...',
       connectionError: 'Errore di connessione',
       emptyText: 'Nessun testo ricevuto.'
+    },
+    b2bCases: {
+      title: 'Gestione Pratiche',
+      subtitle: 'Apri, monitora e completa le pratiche funebri della tua agenzia.',
+      newCase: 'Nuova Pratica',
+      columns: {
+        id: 'ID',
+        family: 'Famiglia',
+        service: 'Servizio',
+        amount: 'Importo',
+        status: 'Stato'
+      },
+      statuses: {
+        open: 'Aperta',
+        inProgress: 'In corso',
+        completed: 'Completata'
+      },
+      empty: 'Nessuna pratica al momento. Crea la prima pratica per iniziare.',
+      drawer: {
+        title: 'Nuova Pratica',
+        editTitle: 'Modifica Pratica',
+        submit: 'Crea Pratica',
+        submitEdit: 'Salva Modifiche',
+        cancel: 'Annulla',
+        sections: {
+          deceased: 'Anagrafica Defunto',
+          requester: 'Richiedente',
+          funeral: 'Esequie',
+          admin: 'Amministrazione'
+        },
+        fields: {
+          deceasedName: 'Nome e Cognome',
+          deathPlace: 'Luogo del decesso',
+          deathDate: 'Data del decesso',
+          requesterName: 'Nome e Cognome',
+          requesterPhone: 'Telefono',
+          kinship: 'Parentela',
+          riteType: 'Tipo di rito',
+          funeralDate: 'Data esequie',
+          amount: 'Importo (€)',
+          status: 'Stato'
+        },
+        placeholders: {
+          deceasedName: 'es. Luigi Casadei',
+          deathPlace: 'es. Forlì',
+          requesterName: 'es. Marco Casadei',
+          requesterPhone: 'es. +39 333 1234567',
+          kinship: 'es. Figlio',
+          amount: 'es. 3500'
+        },
+        riteOptions: {
+          cremation: 'Cremazione',
+          entombment: 'Tumulazione',
+          burial: 'Inumazione'
+        }
+      }
     },
     b2bDashboard: {
       title: 'Dashboard Agenzia',
@@ -887,6 +944,7 @@ export const copy = {
       switchAccount: 'Switch account',
       links: {
         dashboard: 'Operations Dashboard',
+        cases: 'Cases',
         burocrazia: 'Smart Bureaucracy',
         logistica: 'Fleet Logistics',
         preventivi: 'Quotes & Payments',
@@ -1051,6 +1109,62 @@ export const copy = {
       placeholderText: 'The commemorative text will appear here after AI generation...',
       connectionError: 'Connection error',
       emptyText: 'No text received.'
+    },
+    b2bCases: {
+      title: 'Case Management',
+      subtitle: 'Open, track and complete your agency funeral cases.',
+      newCase: 'New Case',
+      columns: {
+        id: 'ID',
+        family: 'Family',
+        service: 'Service',
+        amount: 'Amount',
+        status: 'Status'
+      },
+      statuses: {
+        open: 'Open',
+        inProgress: 'In progress',
+        completed: 'Completed'
+      },
+      empty: 'No cases yet. Create your first case to get started.',
+      drawer: {
+        title: 'New Case',
+        editTitle: 'Edit Case',
+        submit: 'Create Case',
+        submitEdit: 'Save Changes',
+        cancel: 'Cancel',
+        sections: {
+          deceased: 'Deceased Details',
+          requester: 'Requester',
+          funeral: 'Funeral',
+          admin: 'Administration'
+        },
+        fields: {
+          deceasedName: 'Full name',
+          deathPlace: 'Place of death',
+          deathDate: 'Date of death',
+          requesterName: 'Full name',
+          requesterPhone: 'Phone',
+          kinship: 'Kinship',
+          riteType: 'Rite type',
+          funeralDate: 'Funeral date',
+          amount: 'Amount (€)',
+          status: 'Status'
+        },
+        placeholders: {
+          deceasedName: 'e.g. Luigi Casadei',
+          deathPlace: 'e.g. Forlì',
+          requesterName: 'e.g. Marco Casadei',
+          requesterPhone: 'e.g. +39 333 1234567',
+          kinship: 'e.g. Son',
+          amount: 'e.g. 3500'
+        },
+        riteOptions: {
+          cremation: 'Cremation',
+          entombment: 'Entombment',
+          burial: 'Burial'
+        }
+      }
     },
     b2bDashboard: {
       title: 'Agency Dashboard',

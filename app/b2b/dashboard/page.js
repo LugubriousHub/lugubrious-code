@@ -3,14 +3,17 @@
 import { Activity, BellRing } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLanguage } from '../../../components/LanguageProvider';
+import { useDashboard } from '../../context/DashboardContext';
 import { copy } from '../../lib/translations';
 
 function buildSmoothPath(points) {
   if (points.length === 0) return '';
   let path = `M ${points[0].x} ${points[0].y}`;
+  // Tensione più bassa = linea più tesa e legata ai punti (era di fatto 0.5 = control point al midpoint).
+  const tension = 0.2;
   for (let i = 1; i < points.length; i += 1) {
-    const midX = (points[i - 1].x + points[i].x) / 2;
-    path += ` C ${midX} ${points[i - 1].y}, ${midX} ${points[i].y}, ${points[i].x} ${points[i].y}`;
+    const dx = (points[i].x - points[i - 1].x) * tension;
+    path += ` C ${points[i - 1].x + dx} ${points[i - 1].y}, ${points[i].x - dx} ${points[i].y}, ${points[i].x} ${points[i].y}`;
   }
   return path;
 }
@@ -32,15 +35,16 @@ function computeTicks(minValue, maxValue) {
 export default function B2BDashboardPage() {
   const { language } = useLanguage();
   const t = copy[language].b2bDashboard;
+  const { data } = useDashboard();
 
   const [metric, setMetric] = useState('operations');
   const [year, setYear] = useState('2026');
   const [activeIndex, setActiveIndex] = useState(null);
-  const [displaySeries, setDisplaySeries] = useState(() => t.datasets.operations['2026']);
+  const [displaySeries, setDisplaySeries] = useState(() => data.chart.datasets.operations['2026']);
 
   const previousSeriesRef = useRef(displaySeries);
 
-  const targetSeries = t.datasets[metric][year];
+  const targetSeries = data.chart.datasets[metric][year];
 
   useEffect(() => {
     const from = previousSeriesRef.current;
@@ -143,14 +147,14 @@ export default function B2BDashboardPage() {
       <p className="mt-2 text-slate-300">{t.subtitle}</p>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {t.stats.map((card) => (
-          <article key={card.label} className="surface-soft border border-white/10 p-3.5">
-            <p className="text-xs uppercase tracking-wide text-slate-400">{card.label}</p>
+        {data.stats.map((card, index) => (
+          <article key={card.id} className="surface-soft border border-white/10 p-3.5">
+            <p className="text-xs uppercase tracking-wide text-slate-400">{t.stats[index]?.label}</p>
             <div className="mt-1.5 flex items-center gap-2">
               <p className="text-2xl font-semibold text-white">{card.value}</p>
               <span
                 className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                  card.delta.startsWith('+')
+                  card.trend === 'up'
                     ? 'border border-emerald-300/40 bg-emerald-500/10 text-emerald-300'
                     : 'border border-rose-300/40 bg-rose-500/10 text-rose-300'
                 }`}
@@ -158,7 +162,7 @@ export default function B2BDashboardPage() {
                 {card.delta}
               </span>
             </div>
-            <p className="mt-1 text-xs text-slate-400">{card.detail}</p>
+            <p className="mt-1 text-xs text-slate-400">{t.stats[index]?.detail}</p>
           </article>
         ))}
       </div>
@@ -326,16 +330,22 @@ export default function B2BDashboardPage() {
             </div>
 
             <div className="mt-4 max-h-[330px] space-y-2 overflow-y-auto pr-1">
-              {t.notifications.map((item) => (
-                <button
-                  key={item.title}
-                  type="button"
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.03] p-3 text-left transition hover:border-sky-300/40 hover:bg-sky-400/[0.08]"
-                >
-                  <p className="text-sm font-semibold text-white">{item.title}</p>
-                  <p className="mt-1 text-xs text-slate-400">{item.detail}</p>
-                </button>
-              ))}
+              {data.notifications.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-white/10 bg-white/[0.02] p-6 text-center text-sm text-slate-400">
+                  {language === 'it' ? 'Nessuna nuova notifica' : 'No new notifications'}
+                </div>
+              ) : (
+                data.notifications.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className="w-full rounded-lg border border-white/10 bg-white/[0.03] p-3 text-left transition hover:border-sky-300/40 hover:bg-sky-400/[0.08]"
+                  >
+                    <p className="text-sm font-semibold text-white">{item.title}</p>
+                    <p className="mt-1 text-xs text-slate-400">{item.detail}</p>
+                  </button>
+                ))
+              )}
             </div>
 
             <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-xs text-slate-300">

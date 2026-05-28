@@ -77,7 +77,6 @@ export default function B2BLoginPage() {
                 className="field"
                 placeholder="••••••••"
                 minLength={8}
-                pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}"
                 value={formData.password}
                 onChange={(event) => setFormData((prev) => ({ ...prev, password: event.target.value }))}
                 onBlur={validateForm}
